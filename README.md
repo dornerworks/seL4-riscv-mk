@@ -15,15 +15,102 @@ This repository is basically a fork from the master seL4 branch, containing
 the seL4/RISC-V port code. Hopefully when it reaches a mature stage, it would
 be upstream with seL4. 
 
-Updates:
+Updated Build Instructions:
 ------------------
 
-  * [`seL4 on RISC-V is running SOS (Simple Operating System)`][7]
-  * [`Porting seL4 to RISC-V | Status Update #1`][6]
-  ![Alttext](http://1.bp.blogspot.com/--e2fEOJs5cs/VXWupBfj9aI/AAAAAAAAGVk/noRdzvT3amo/s1600/Selection_218.png "seL4 root task is saying hi!") 
+Instructions based on the following blog post from Hesham Almatary: [`seL4 on RISC-V is running SOS (Simple Operating System)`][7]
+  
+### Instructions for installing the 2015 RISCV toolchain:
 
-  [6]: http://heshamelmatary.blogspot.co.uk/2015/05/porting-sel4-to-risc-v-status-report-no1.html
-  [7]: http://heshamelmatary.blogspot.co.uk/2015/06/sel4-on-risc-v-is-running-sos-simple.html
+1. Get the source code
+  ```
+  mkdir riscv; cd riscv
+  git clone https://github.com/riscv/riscv-gnu-toolchain
+  cd riscv-gnu-toolchain
+  git submodule update --init --recursive
+  ```
+2. Get the 2015 Submodules
+  * cd into the following directories and perform git checkout <hash>:
+    * riscv-binutils-gdb -> 5836a81
+    * riscv-dejagnu -> dfeb344
+    * riscv-gcc -> cce0626
+    * riscv-glibc -> 1d4bbc5
+    * riscv-newlib -> 9753bc3
+3. Get 2015 Version of the Top-Level Repository
+  * `git checkout dd2c7916`
+4. Configure and Make the Toolchain
+  ```
+  ./configure --with-xlen=32 --prefix=/opt/riscv
+  make
+  ```
+5. Export the RISCV toolchain to your path
+  * Open your .bashrc file and add the following line: `export PATH=/opt/riscv/bin:$PATH`
+
+The 2015 version of the toolchain should now be ready to use!
+
+### Instructions for getting the RISCV Simulation Tools:
+
+1. Clone into the repositories
+  ```
+  git clone https://github.com/riscv/riscv-isa-sim
+  git clone https://github.com/riscv/riscv-fesvr
+  ```
+2. Install the Front-End Server
+  ``` 
+  export RISCV=/opt/riscv
+  cd ~/riscv/riscv-fesvr
+  git checkout ceb56f2
+  ./configure --prefix=$RISCV
+  make
+  sudo make install
+  ```
+3. Installing Spike
+  ```
+  cd ~/riscv/riscv-isa-sim
+  git checkout 092f378
+  ./configure --prefix=$RISCV --with-fesvr=$RISCV
+  make
+  sudo make install
+  ```
+  
+### Build for Rocket Chip
+1. Get project:
+  ```
+  cd ~
+  mkdir seL4riscv
+  cd seL4riscv
+  repo init -u https://github.com/dornerworks/sel4riscv-manifest
+  repo sync
+  ```
+1. `make riscv_defconfig`
+1. `make menuconfig`
+  * Enable `seL4 Kernel  ---> seL4 System  ---> [*] ROCKET_CHIP`
+1. `make`
+
+### RISC-V Rocket Chip
+1. Get specific prebuilt files for Rocket Chip on ZedBoard
+  ```
+  git clone https://github.com/ucb-bar/fpga-images-zedboard.git
+  cd fpga-images-zedboard
+  git checkout d242f27e1e2c93e843a29c06ba6725c8cecf06b7
+  ```
+1. Copy the following files to BOOT partition on SD Card:
+  * `uramdisk.image.gz` -> `uramdisk.image.gz`
+  * `boot.bin` -> `BOOT.bin`
+  * `uImage` -> `uImage`
+  * `devicetree.dtb` -> `devicetree.dtb`
+1. Boot ZedBoard with SD boot mode.
+1. Login with root/root
+1. Run test application:
+  * `./fesvr-zynq pk hello`
+  * Should get output of `hello!`
+1. Get an IP address on network: `udhcpc eth0`
+1. On host, secure copy image to board: `scp images/sos-image-riscv-spike root@$BOARD_IP:~/`
+1. Run seL4 image: `./fesvr-zynq sos-image-riscv-spike`
+
+
+[7]: http://heshamelmatary.blogspot.co.uk/2015/06/sel4-on-risc-v-is-running-sos-simple.html
+
 
 The seL4 Repository
 ===================
