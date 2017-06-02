@@ -86,6 +86,7 @@ The 2015 version of the toolchain should now be ready to use!
 1. `make menuconfig`
   * Enable `seL4 Kernel  ---> seL4 System  ---> [*] ROCKET_CHIP`
 1. `make`
+Note: The final `make` may fail, if it does, you can just build it again and it will work.
 
 ### RISC-V Rocket Chip
 1. Get specific prebuilt files for Rocket Chip on ZedBoard
